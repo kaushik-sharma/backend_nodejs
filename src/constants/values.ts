@@ -1,0 +1,1 @@
+export const MIN_ACCOUNT_OPENING_AGE = 18;
