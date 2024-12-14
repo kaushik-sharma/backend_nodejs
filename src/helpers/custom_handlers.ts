@@ -1,8 +1,8 @@
-import { NextFunction, Response, ErrorRequestHandler } from "express";
+import { Response, ErrorRequestHandler } from "express";
 
-interface Metadata {
+export interface Metadata {
   result: boolean;
-  message: string;
+  message?: string;
 }
 
 interface SuccessResponseHandlerParams {
@@ -11,25 +11,24 @@ interface SuccessResponseHandlerParams {
   metadata: Metadata;
   data?: Record<string, any>;
 }
-type SuccessResponseHandler = (params: SuccessResponseHandlerParams) => void;
 
-export const requestHandler = async (
-  next: NextFunction,
-  callback: () => Promise<void>
-): Promise<void> => {
-  try {
-    await callback();
-  } catch (error) {
-    next(error);
-  }
-};
+// export const requestHandler = async (
+//   next: NextFunction,
+//   callback: () => Promise<void>
+// ): Promise<void> => {
+//   try {
+//     await callback();
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
-export const successResponseHandler: SuccessResponseHandler = ({
+export const successResponseHandler = ({
   res,
   status,
   metadata,
   data,
-}) => {
+}: SuccessResponseHandlerParams): void => {
   res.status(status).json({
     metadata: metadata,
     data: data,

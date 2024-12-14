@@ -1,4 +1,13 @@
 node_modules/
+
 dist/
 bundle/
+
 .env
+
+private-key.pem
+public-key.pem
+
+test-project-a51d7-5ae5ebfe87fd.ts
+
+.DS_Store
