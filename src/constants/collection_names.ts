@@ -1,9 +1,6 @@
 export class CollectionNames {
   static readonly users = "users";
   static readonly sessions = "sessions";
-  static readonly vocabularyQuizCategories = "vocabularyQuizCategories";
-  static readonly vocabularyQuizSubcategories = "vocabularyQuizSubcategories";
-  static readonly vocabularyQuizQuestions = "vocabularyQuizQuestions";
   static readonly posts = "posts";
   static readonly reactions = "reactions";
   static readonly comments = "comments";
