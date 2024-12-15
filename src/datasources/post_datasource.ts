@@ -286,6 +286,39 @@ export class PostDatasource {
           },
         },
       },
+      // Join users to get author details
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          pipeline: [
+            {
+              $project: {
+                _id: 0,
+                firstName: 1,
+                lastName: 1,
+                profileImageUrl: 1,
+                status: 1,
+              },
+            },
+          ],
+          as: "user",
+        },
+      },
+      {
+        $addFields: {
+          user: {
+            $ifNull: [{ $arrayElemAt: ["$user", 0] }, {}],
+          },
+        },
+      },
+      // Filter out posts where the user's status is not ACTIVE
+      {
+        $match: {
+          "user.status": EntityStatus.active,
+        },
+      },
       // Project only the necessary fields
       {
         $project: {
@@ -294,6 +327,10 @@ export class PostDatasource {
           likes: "$likes.count",
           dislikes: "$dislikes.count",
           comments: 1,
+          firstName: "$user.firstName",
+          lastName: "$user.lastName",
+          profileImageUrl: "$user.profileImageUrl",
+          createdAt: 1,
         },
       },
       // Add pagination stages
