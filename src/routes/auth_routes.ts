@@ -6,6 +6,7 @@ import {
   signOut,
   signOutAllSessions,
   deleteAccount,
+  refreshAuthToken,
 } from "../controllers/auth_controller.js";
 
 const router = Router();
@@ -16,5 +17,6 @@ router.post("/signIn", signIn);
 router.post("/signOut", signOut);
 router.post("/signOutAllSessions", signOutAllSessions);
 router.delete("/deleteAccount", deleteAccount);
+router.get("/refreshAuthToken", refreshAuthToken);
 
 export default router;

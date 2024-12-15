@@ -55,7 +55,7 @@ export class JwtService {
     return [userId, sessionId];
   };
 
-  static readonly refreshAuthToken = (userId: string, sessionId: string): string => {
+  static readonly getRefreshToken = (userId: string, sessionId: string): string => {
     const payload = {
       sessionId: sessionId,
       userId: userId,

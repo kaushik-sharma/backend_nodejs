@@ -197,4 +197,13 @@ export const deleteAccount: RequestHandler = async (req, res, next) => {
   });
 };
 
-// TODO: Add refresh auth token function
+export const refreshAuthToken: RequestHandler = async (req, res, next) => {
+  const [userId, sessionId] = await JwtService.verifyJwt(req.headers);
+  const refreshToken = JwtService.getRefreshToken(userId, sessionId);
+  successResponseHandler({
+    res: res,
+    status: 200,
+    metadata: { result: true },
+    data: { refreshToken: refreshToken },
+  });
+};
