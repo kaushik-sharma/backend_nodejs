@@ -75,12 +75,6 @@ export class AuthDatasource {
     return createdUser.id as string;
   };
 
-  static readonly clearPrevUserSessions = async (
-    userId: string
-  ): Promise<void> => {
-    await SessionModel.deleteMany({ userId: userId });
-  };
-
   static readonly getUserIdFromEmail = async (
     email: string
   ): Promise<string | null> => {

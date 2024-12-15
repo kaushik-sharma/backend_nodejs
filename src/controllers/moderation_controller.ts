@@ -1,193 +1,201 @@
-// import { RequestHandler, Response } from "express";
-// import { JwtService } from "../services/jwt_service.js";
-// import {
-//   ReportPostModel,
-//   ReportPostType,
-// } from "../models/moderation/report_post_model.js";
-// import { validateModel } from "../helpers/validation_helpers.js";
-// import { ModerationDatasource } from "../datasources/moderation_datasource.js";
-// import { successResponseHandler } from "../helpers/custom_handlers.js";
-// import {
-//   ReportCommentModel,
-//   ReportCommentType,
-// } from "../models/moderation/report_comment_model.js";
-// import { PostDatasource } from "../datasources/post_datasource.js";
-// import {
-//   ReportUserModel,
-//   ReportUserRequestModel,
-//   ReportUserRequestType,
-//   ReportUserType,
-// } from "../models/moderation/report_user_model.js";
-// import { AuthDatasource } from "../datasources/auth_datasource.js";
-// import {
-//   COMMENT_REPORT_REVIEW_THRESHOLD,
-//   MAX_CONTENT_REPORTING_LIMIT_PER_USER,
-//   POST_REPORT_REVIEW_THRESHOLD,
-//   USER_REPORT_REVIEW_THRESHOLD,
-// } from "../constants/values.js";
+import { RequestHandler, Response } from "express";
+import { JwtService } from "../services/jwt_service.js";
+import {
+  ReportPostModel,
+  ReportPostType,
+} from "../models/moderation/report_post_model.js";
+import { validateModel } from "../helpers/validation_helpers.js";
+import { ModerationDatasource } from "../datasources/moderation_datasource.js";
+import { successResponseHandler } from "../helpers/custom_handlers.js";
+import {
+  ReportCommentModel,
+  ReportCommentType,
+} from "../models/moderation/report_comment_model.js";
+import { PostDatasource } from "../datasources/post_datasource.js";
+import {
+  ReportUserModel,
+  ReportUserRequestModel,
+  ReportUserRequestType,
+  ReportUserType,
+} from "../models/moderation/report_user_model.js";
+import { AuthDatasource } from "../datasources/auth_datasource.js";
+import {
+  COMMENT_REPORT_REVIEW_THRESHOLD,
+  MAX_CONTENT_REPORTING_LIMIT_PER_USER,
+  POST_REPORT_REVIEW_THRESHOLD,
+  USER_REPORT_REVIEW_THRESHOLD,
+} from "../constants/values.js";
+import { ContentReporterModel } from "../models/moderation/content_reporter_model.js";
 
-// // TODO: Perform operations in a tranx
+export const reportPost: RequestHandler = async (req, res, next) => {
+  const [userId, sessionId] = await JwtService.verifyJwt(req.headers);
 
-// export const reportPost: RequestHandler = async (req, res, next) => {
-//   const userId = await JwtService.verifyJwt(req.headers);
+  const reportPostModel = new ReportPostModel(req.body as ReportPostType);
 
-//   const reportPostModel = new ReportPostModel(req.body as ReportPostType);
+  validateModel(reportPostModel);
 
-//   validateModel(reportPostModel);
+  if (!(await _canUserReportContent(userId))) {
+    _sendReportLimitExceededResponse(res);
+    return;
+  }
 
-//   if (!(await _canUserReportContent(userId))) {
-//     _sendReportLimitExceededResponse(res);
-//     return;
-//   }
+  const postExists: boolean = await PostDatasource.postExists(
+    reportPostModel.postId!.toString()
+  );
+  if (!postExists) {
+    throw new Error("Post not found!");
+  }
 
-//   const postUserId = await PostDatasource.getPostUserId(
-//     reportPostModel.postId!.toString()
-//   );
-//   if (postUserId === null) {
-//     throw new Error("Post not found!");
-//   }
-//   if (userId === postUserId) {
-//     throw new Error("Can not report your own post!");
-//   }
+  const postUserId = await PostDatasource.getPostUserId(
+    reportPostModel.postId!.toString()
+  );
+  if (userId === postUserId) {
+    throw new Error("Can not report your own post!");
+  }
 
-//   await ModerationDatasource.reportPost(reportPostModel);
+  await ModerationDatasource.reportPost(reportPostModel);
 
-//   const postReportCount = await ModerationDatasource.postReportCount(
-//     reportPostModel.postId!.toString()
-//   );
+  const postReportCount = await ModerationDatasource.postReportCount(
+    reportPostModel.postId!.toString()
+  );
 
-//   if (postReportCount >= POST_REPORT_REVIEW_THRESHOLD) {
-//     await ModerationDatasource.markPostForManualReview(
-//       reportPostModel.postId!.toString()
-//     );
-//   }
+  if (postReportCount >= POST_REPORT_REVIEW_THRESHOLD) {
+    await ModerationDatasource.markPostForManualReview(
+      reportPostModel.postId!.toString()
+    );
+  }
 
-//   await _recordUserReportCount(userId);
+  await _recordUserReportCount(userId);
 
-//   successResponseHandler({
-//     res: res,
-//     status: 200,
-//     metadata: { result: true },
-//   });
-// };
+  successResponseHandler({
+    res: res,
+    status: 200,
+    metadata: { result: true },
+  });
+};
 
-// export const reportComment: RequestHandler = async (req, res, next) => {
-//   const userId = await JwtService.verifyJwt(req.headers);
+export const reportComment: RequestHandler = async (req, res, next) => {
+  const [userId, sessionId] = await JwtService.verifyJwt(req.headers);
 
-//   const reportCommentModel = new ReportCommentModel(
-//     req.body as ReportCommentType
-//   );
+  const reportCommentModel = new ReportCommentModel(
+    req.body as ReportCommentType
+  );
 
-//   validateModel(reportCommentModel);
+  validateModel(reportCommentModel);
 
-//   if (!(await _canUserReportContent(userId))) {
-//     _sendReportLimitExceededResponse(res);
-//     return;
-//   }
+  if (!(await _canUserReportContent(userId))) {
+    _sendReportLimitExceededResponse(res);
+    return;
+  }
 
-//   const commentUserId = await PostDatasource.getCommentUserId(
-//     reportCommentModel.commentId!.toString()
-//   );
-//   if (commentUserId === null) {
-//     throw new Error("Comment not found!");
-//   }
-//   if (userId === commentUserId) {
-//     throw new Error("Can not report your own comment!");
-//   }
+  const commentExists: boolean = await PostDatasource.commentExists(
+    reportCommentModel.commentId!.toString()
+  );
+  if (!commentExists) {
+    throw new Error("Comment not found!");
+  }
 
-//   await ModerationDatasource.reportComment(reportCommentModel);
+  const commentUserId = await PostDatasource.getCommentUserId(
+    reportCommentModel.commentId!.toString()
+  );
+  if (userId === commentUserId) {
+    throw new Error("Can not report your own comment!");
+  }
 
-//   const commentReportCount = await ModerationDatasource.commentReportCount(
-//     reportCommentModel.commentId!.toString()
-//   );
+  await ModerationDatasource.reportComment(reportCommentModel);
 
-//   if (commentReportCount >= COMMENT_REPORT_REVIEW_THRESHOLD) {
-//     await ModerationDatasource.markCommentForManualReview(
-//       reportCommentModel.commentId!.toString()
-//     );
-//   }
+  const commentReportCount = await ModerationDatasource.commentReportCount(
+    reportCommentModel.commentId!.toString()
+  );
 
-//   await _recordUserReportCount(userId);
+  if (commentReportCount >= COMMENT_REPORT_REVIEW_THRESHOLD) {
+    await ModerationDatasource.markCommentForManualReview(
+      reportCommentModel.commentId!.toString()
+    );
+  }
 
-//   successResponseHandler({
-//     res: res,
-//     status: 200,
-//     metadata: { result: true },
-//   });
-// };
+  await _recordUserReportCount(userId);
 
-// export const reportUser: RequestHandler = async (req, res, next) => {
-//   const userId = await JwtService.verifyJwt(req.headers);
+  successResponseHandler({
+    res: res,
+    status: 200,
+    metadata: { result: true },
+  });
+};
 
-//   const reportUserRequestModel = new ReportUserRequestModel(
-//     req.body as ReportUserRequestType
-//   );
+export const reportUser: RequestHandler = async (req, res, next) => {
+  const [userId, sessionId] = await JwtService.verifyJwt(req.headers);
 
-//   validateModel(reportUserRequestModel);
+  const reportUserRequestModel = new ReportUserRequestModel(
+    req.body as ReportUserRequestType
+  );
 
-//   if (!(await _canUserReportContent(userId))) {
-//     _sendReportLimitExceededResponse(res);
-//     return;
-//   }
+  validateModel(reportUserRequestModel);
 
-//   const reportedUserId = await AuthDatasource.getUserIdFromEmail(
-//     reportUserRequestModel.reportedUserEmail
-//   );
-//   if (reportedUserId === undefined) {
-//     throw new Error("User not found!");
-//   }
+  if (!(await _canUserReportContent(userId))) {
+    _sendReportLimitExceededResponse(res);
+    return;
+  }
 
-//   const reportUserData: Record<string, any> = {
-//     userId: reportedUserId,
-//     reason: reportUserRequestModel.reason,
-//   };
+  const reportedUserId = await AuthDatasource.getUserIdFromEmail(
+    reportUserRequestModel.reportedUserEmail
+  );
+  if (reportedUserId === null) {
+    throw new Error("User not found!");
+  }
 
-//   const reportUserModel = new ReportUserModel(reportUserData as ReportUserType);
+  const reportUserData: Record<string, any> = {
+    userId: reportedUserId,
+    reason: reportUserRequestModel.reason,
+  };
 
-//   validateModel(reportUserModel);
+  const reportUserModel = new ReportUserModel(reportUserData as ReportUserType);
 
-//   if (userId === reportedUserId) {
-//     throw new Error("Can not report yourself!");
-//   }
+  validateModel(reportUserModel);
 
-//   await ModerationDatasource.reportUser(reportUserModel);
+  if (userId === reportedUserId) {
+    throw new Error("Can not report yourself!");
+  }
 
-//   const userReportedCount = await ModerationDatasource.userReportedCount(
-//     reportUserModel.userId!.toString()
-//   );
+  await ModerationDatasource.reportUser(reportUserModel);
 
-//   if (userReportedCount >= USER_REPORT_REVIEW_THRESHOLD) {
-//     await ModerationDatasource.markUserForManualReview(
-//       reportUserModel.userId!.toString()
-//     );
-//     await AuthDatasource.clearPrevUserSessions(reportedUserId);
-//   }
+  const userReportedCount = await ModerationDatasource.userReportedCount(
+    reportUserModel.userId!.toString()
+  );
 
-//   await _recordUserReportCount(userId);
+  if (userReportedCount >= USER_REPORT_REVIEW_THRESHOLD) {
+    await ModerationDatasource.markUserForManualReview(
+      reportUserModel.userId!.toString()
+    );
+    await AuthDatasource.signOutAllSessions(reportedUserId);
+  }
 
-//   successResponseHandler({
-//     res: res,
-//     status: 200,
-//     metadata: { result: true },
-//   });
-// };
+  await _recordUserReportCount(userId);
 
-// const _canUserReportContent = async (userId: string): Promise<boolean> => {
-//   const count = await ModerationDatasource.getUserReportQuotaUsage(userId);
-//   return count < MAX_CONTENT_REPORTING_LIMIT_PER_USER;
-// };
+  successResponseHandler({
+    res: res,
+    status: 200,
+    metadata: { result: true },
+  });
+};
 
-// const _sendReportLimitExceededResponse = (res: Response): void => {
-//   successResponseHandler({
-//     res: res,
-//     status: 200,
-//     metadata: {
-//       result: false,
-//       message: "You have exceeded your daily reporting limit.",
-//     },
-//   });
-// };
+const _canUserReportContent = async (userId: string): Promise<boolean> => {
+  const count = await ModerationDatasource.getUserReportQuotaUsage(userId);
+  return count < MAX_CONTENT_REPORTING_LIMIT_PER_USER;
+};
 
-// const _recordUserReportCount = async (userId: string): Promise<void> => {
-//   await ModerationDatasource.recordUserReportCount(userId);
-// };
+const _sendReportLimitExceededResponse = (res: Response): void => {
+  successResponseHandler({
+    res: res,
+    status: 200,
+    metadata: {
+      result: false,
+      message: "You have exceeded your daily reporting limit.",
+    },
+  });
+};
+
+const _recordUserReportCount = async (userId: string): Promise<void> => {
+  const model = new ContentReporterModel({ userId: userId });
+  await ModerationDatasource.recordUserReportCount(model);
+};
