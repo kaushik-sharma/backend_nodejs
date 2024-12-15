@@ -1,216 +1,248 @@
-// import { RequestHandler } from "express";
-// import { arrayToTree } from "performant-array-to-tree";
+import { RequestHandler } from "express";
+import { arrayToTree } from "performant-array-to-tree";
 
-// import { JwtService } from "../services/jwt_service.js";
-// import { validateModel } from "../helpers/validation_helpers.js";
-// import { successResponseHandler } from "../helpers/custom_handlers.js";
-// import {
-//   PostCreationModel,
-//   PostCreationType,
-// } from "../models/post/post_model.js";
-// import { PostDatasource } from "../datasources/post_datasource.js";
-// import { ReactionModel, ReactionType } from "../models/post/reaction_model.js";
-// import { CommentModel, CommentType } from "../models/post/comment_model.js";
+import { JwtService } from "../services/jwt_service.js";
+import { validateModel } from "../helpers/validation_helpers.js";
+import { successResponseHandler } from "../helpers/custom_handlers.js";
+import {
+  PostCreationModel,
+  PostCreationType,
+} from "../models/post/post_model.js";
+import { PostDatasource } from "../datasources/post_datasource.js";
+import { ReactionModel, ReactionType } from "../models/post/reaction_model.js";
+import { CommentModel, CommentType } from "../models/post/comment_model.js";
 
-// export const createPost: RequestHandler = async (req, res, next) => {
-//   const userId = await JwtService.verifyJwt(req.headers);
+export const createPost: RequestHandler = async (req, res, next) => {
+  const [userId, sessionId] = await JwtService.verifyJwt(req.headers);
 
-//   const reqBody = {
-//     ...req.body,
-//     userId: userId,
-//   } as PostCreationType;
+  const reqBody: Record<string, any> = {
+    ...req.body,
+    userId: userId,
+  };
 
-//   const post = new PostCreationModel(reqBody);
+  const post = new PostCreationModel(reqBody as PostCreationType);
 
-//   validateModel(post);
+  validateModel(post);
 
-//   await PostDatasource.createPost(post);
+  await PostDatasource.createPost(post);
 
-//   successResponseHandler({
-//     res: res,
-//     status: 200,
-//     metadata: { result: true },
-//   });
-// };
+  successResponseHandler({
+    res: res,
+    status: 200,
+    metadata: { result: true },
+  });
+};
 
-// export const createReaction: RequestHandler = async (req, res, next) => {
-//   const userId = await JwtService.verifyJwt(req.headers);
+export const createReaction: RequestHandler = async (req, res, next) => {
+  const [userId, sessionId] = await JwtService.verifyJwt(req.headers);
 
-//   const reqBody: Record<string, any> = {
-//     postId: req.params.postId,
-//     userId: userId,
-//     ...req.body,
-//   };
+  const reqBody: Record<string, any> = {
+    ...req.body,
+    postId: req.params.postId,
+    userId: userId,
+  };
 
-//   const reaction = new ReactionModel(reqBody as ReactionType);
+  const reaction = new ReactionModel(reqBody as ReactionType);
 
-//   validateModel(reaction);
+  validateModel(reaction);
 
-//   const postExists: boolean = await PostDatasource.postExists(
-//     req.params.postId
-//   );
-//   if (!postExists) {
-//     throw new Error("Post not found!");
-//   }
+  const postExists: boolean = await PostDatasource.postExists(
+    req.params.postId
+  );
+  if (!postExists) {
+    throw new Error("Post not found!");
+  }
 
-//   await PostDatasource.createReaction(reaction);
+  await PostDatasource.createReaction(reaction);
 
-//   successResponseHandler({
-//     res: res,
-//     status: 200,
-//     metadata: { result: true },
-//   });
-// };
+  successResponseHandler({
+    res: res,
+    status: 200,
+    metadata: { result: true },
+  });
+};
 
-// export const createComment: RequestHandler = async (req, res, next) => {
-//   const userId = await JwtService.verifyJwt(req.headers);
+export const createComment: RequestHandler = async (req, res, next) => {
+  const [userId, sessionId] = await JwtService.verifyJwt(req.headers);
 
-//   const reqBody: Record<string, any> = {
-//     ...req.body,
-//     userId: userId,
-//   };
+  const reqBody: Record<string, any> = {
+    ...req.body,
+    postId: req.params.postId,
+    userId: userId,
+  };
 
-//   const comment = new CommentModel(reqBody as CommentType);
+  const comment = new CommentModel(reqBody as CommentType);
 
-//   validateModel(comment);
+  validateModel(comment);
 
-//   if (comment.level === 0 && comment.parentCommentId !== null) {
-//     throw new Error("parentCommentId must be null if level = 0");
-//   }
-//   if (comment.level > 0 && comment.parentCommentId === null) {
-//     throw new Error("parentCommentId required if level > 0");
-//   }
+  if (comment.level === 0 && comment.parentCommentId !== null) {
+    throw new Error("parentCommentId must be null if level = 0");
+  }
+  if (comment.level > 0 && comment.parentCommentId === null) {
+    throw new Error("parentCommentId required if level > 0");
+  }
 
-//   const postExists: boolean = await PostDatasource.postExists(
-//     comment.postId.toString()
-//   );
-//   if (!postExists) {
-//     throw new Error("Post not found!");
-//   }
+  const postExists: boolean = await PostDatasource.postExists(
+    comment.postId.toString()
+  );
+  if (!postExists) {
+    throw new Error("Post not found!");
+  }
 
-//   if (comment.level > 0) {
-//     const parentCommentExists: boolean =
-//       await PostDatasource.parentCommentExists(
-//         comment.postId.toString(),
-//         comment.parentCommentId!.toString()
-//       );
-//     if (!parentCommentExists) {
-//       throw new Error("Parent comment not found!");
-//     }
-//   }
+  if (comment.level > 0) {
+    const parentCommentExists: boolean = await PostDatasource.commentExists(
+      comment.parentCommentId!.toString(),
+      comment.postId.toString()
+    );
+    if (!parentCommentExists) {
+      throw new Error("Parent comment not found!");
+    }
+    const isParentCommentLevelValid: boolean =
+      await PostDatasource.isCommentLevelValid(
+        comment.parentCommentId!.toString(),
+        comment.level - 1
+      );
+    if (!isParentCommentLevelValid) {
+      throw new Error("Parent comment level not valid!");
+    }
+  }
 
-//   await PostDatasource.createComment(comment);
+  await PostDatasource.createComment(comment);
 
-//   successResponseHandler({
-//     res: res,
-//     status: 200,
-//     metadata: { result: true },
-//   });
-// };
+  successResponseHandler({
+    res: res,
+    status: 200,
+    metadata: { result: true },
+  });
+};
 
-// export const getCommentsByPostId: RequestHandler = async (req, res, next) => {
-//   await JwtService.verifyJwt(req.headers);
+export const getCommentsByPostId: RequestHandler = async (req, res, next) => {
+  await JwtService.verifyJwt(req.headers);
 
-//   const postId = req.params.postId as string | undefined | null;
-//   if (postId === undefined || postId === null) {
-//     throw new Error("Post ID is required.");
-//   }
+  const postId = req.params.postId as string | undefined | null;
+  if (postId === undefined || postId === null) {
+    throw new Error("Post ID is required.");
+  }
 
-//   const postExists: boolean = await PostDatasource.postExists(postId);
-//   if (!postExists) {
-//     throw new Error("Post not found!");
-//   }
+  const postExists: boolean = await PostDatasource.postExists(postId);
+  if (!postExists) {
+    throw new Error("Post not found!");
+  }
 
-//   const comments = await PostDatasource.getCommentsByPostId(postId);
+  const comments = await PostDatasource.getCommentsByPostId(postId);
 
-//   const tree = arrayToTree(comments, {
-//     id: "_id",
-//     parentId: "parentCommentId",
-//     nestedIds: false,
-//     childrenField: "replies",
-//     dataField: null,
-//   });
+  const commentsTree = arrayToTree(comments, {
+    id: "_id",
+    parentId: "parentCommentId",
+    childrenField: "replies",
+    nestedIds: false,
+    dataField: null,
+  });
 
-//   successResponseHandler({
-//     res: res,
-//     status: 200,
-//     metadata: { result: true },
-//     data: tree,
-//   });
-// };
+  successResponseHandler({
+    res: res,
+    status: 200,
+    metadata: { result: true },
+    data: commentsTree,
+  });
+};
 
-// export const getPosts: RequestHandler = async (req, res, next) => {
-//   await JwtService.verifyJwt(req.headers);
+export const getUserPosts: RequestHandler = async (req, res, next) => {
+  const [userId, sessionId] = await JwtService.verifyJwt(req.headers);
 
-//   const page = parseInt(req.params.page);
-//   const posts = await PostDatasource.getPosts(page);
+  const page = parseInt(req.params.page);
 
-//   successResponseHandler({
-//     res: res,
-//     status: 200,
-//     metadata: { result: true },
-//     data: posts,
-//   });
-// };
+  const posts = await PostDatasource.getPostsByUserId(userId, page);
 
-// export const deletePost: RequestHandler = async (req, res, next) => {
-//   const userId = await JwtService.verifyJwt(req.headers);
+  successResponseHandler({
+    res: res,
+    status: 200,
+    metadata: { result: true },
+    data: posts,
+  });
+};
 
-//   const postId = req.params.postId as string | undefined | null;
-//   if (postId === undefined || postId === null) {
-//     throw new Error("Post ID is required.");
-//   }
+export const getUserComments: RequestHandler = async (req, res, next) => {
+  const [userId, sessionId] = await JwtService.verifyJwt(req.headers);
 
-//   await PostDatasource.deletePost(postId, userId);
+  const page = parseInt(req.params.page);
 
-//   successResponseHandler({
-//     res: res,
-//     status: 200,
-//     metadata: { result: true },
-//   });
-// };
+  const comments = await PostDatasource.getCommentsByUserId(userId, page);
 
-// export const deleteComment: RequestHandler = async (req, res, next) => {
-//   const userId = await JwtService.verifyJwt(req.headers);
+  successResponseHandler({
+    res: res,
+    status: 200,
+    metadata: { result: true },
+    data: comments,
+  });
+};
 
-//   const commentId = req.params.commentId as string | undefined | null;
-//   if (commentId === undefined || commentId === null) {
-//     throw new Error("Comment ID is required.");
-//   }
+export const deletePost: RequestHandler = async (req, res, next) => {
+  const [userId, sessionId] = await JwtService.verifyJwt(req.headers);
 
-//   await PostDatasource.deleteComment(commentId, userId);
+  const postId = req.params.postId as string | undefined | null;
+  if (postId === undefined || postId === null) {
+    throw new Error("Post ID is required.");
+  }
 
-//   successResponseHandler({
-//     res: res,
-//     status: 200,
-//     metadata: { result: true },
-//   });
-// };
+  const postExists: boolean = await PostDatasource.postExists(postId);
+  if (!postExists) {
+    throw new Error("Post not found!");
+  }
 
-// export const getPostsByUserId: RequestHandler = async (req, res, next) => {
-//   const userId = await JwtService.verifyJwt(req.headers);
+  const postUserId: string = await PostDatasource.getPostUserId(postId);
+  if (postUserId !== userId) {
+    throw new Error("Can not delete this post!");
+  }
 
-//   const page = parseInt(req.params.page);
+  await PostDatasource.deletePost(postId, userId);
 
-//   const posts = await PostDatasource.getPostsByUserId(page, userId);
+  successResponseHandler({
+    res: res,
+    status: 200,
+    metadata: { result: true },
+  });
+};
 
-//   successResponseHandler({
-//     res: res,
-//     status: 200,
-//     metadata: { result: true },
-//     data: posts,
-//   });
-// };
+export const deleteComment: RequestHandler = async (req, res, next) => {
+  const [userId, sessionId] = await JwtService.verifyJwt(req.headers);
 
-// export const getCommentsByUserId: RequestHandler = async (req, res, next) => {
-//   const userId = await JwtService.verifyJwt(req.headers);
+  const commentId = req.params.commentId as string | undefined | null;
+  if (commentId === undefined || commentId === null) {
+    throw new Error("Comment ID is required.");
+  }
 
-//   const comments = await PostDatasource.getCommentsByUserId(userId);
+  const commentExists: boolean = await PostDatasource.commentExists(commentId);
+  if (!commentExists) {
+    throw new Error("Comment not found!");
+  }
 
-//   successResponseHandler({
-//     res: res,
-//     status: 200,
-//     metadata: { result: true },
-//     data: comments,
-//   });
-// };
+  const commentUserId: string = await PostDatasource.getCommentUserId(
+    commentId
+  );
+  if (commentUserId !== userId) {
+    throw new Error("Can not delete this comment!");
+  }
+
+  await PostDatasource.deleteComment(commentId, userId);
+
+  successResponseHandler({
+    res: res,
+    status: 200,
+    metadata: { result: true },
+  });
+};
+
+export const getPostsFeed: RequestHandler = async (req, res, next) => {
+  await JwtService.verifyJwt(req.headers);
+
+  const page = parseInt(req.params.page);
+  const posts = await PostDatasource.getPostsFeed(page);
+
+  successResponseHandler({
+    res: res,
+    status: 200,
+    metadata: { result: true },
+    data: posts,
+  });
+};

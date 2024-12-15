@@ -1,28 +1,26 @@
-// import { Router } from "express";
-// import {
-//   createPost,
-//   createReaction,
-//   createComment,
-//   getCommentsByPostId,
-//   getPosts,
-//   deletePost,
-//   deleteComment,
-//   getPostsByUserId,
-//   getCommentsByUserId,
-// } from "../controllers/post_controller.js";
+import { Router } from "express";
+import {
+  createPost,
+  createReaction,
+  createComment,
+  getCommentsByPostId,
+  getUserPosts,
+  getUserComments,
+  deletePost,
+  deleteComment,
+  getPostsFeed,
+} from "../controllers/post_controller.js";
 
-// const router = Router();
+const router = Router();
 
-// router.post("/", createPost);
-// router.get("/:page", getPosts);
-// router.delete("/:postId", deletePost);
-// router.get("/user/:page", getPostsByUserId);
+router.post("/", createPost);
+router.post("/reactions/:postId", createReaction);
+router.post("/comments/:postId", createComment);
+router.get("/comments/:postId", getCommentsByPostId);
+router.get("/user/:page", getUserPosts);
+router.get("/comments/user/:page", getUserComments);
+router.delete("/:postId", deletePost);
+router.delete("/comments/:commentId", deleteComment);
+router.get("/:page", getPostsFeed);
 
-// router.post("/reactions/:postId", createReaction);
-
-// router.get("/comments/user", getCommentsByUserId);
-// router.post("/comments", createComment);
-// router.get("/comments/:postId", getCommentsByPostId);
-// router.delete("/comments/:commentId", deleteComment);
-
-// export default router;
+export default router;

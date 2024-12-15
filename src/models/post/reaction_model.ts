@@ -11,12 +11,12 @@ const reactionSchema = new Schema(
     userId: {
       type: Types.ObjectId,
       required: true,
-      index: 1,
+      index: true,
     },
     postId: {
       type: Types.ObjectId,
       required: true,
-      index: 1,
+      index: true,
     },
     emotionType: {
       type: String,

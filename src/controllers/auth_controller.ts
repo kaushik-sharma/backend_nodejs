@@ -196,3 +196,5 @@ export const deleteAccount: RequestHandler = async (req, res, next) => {
     metadata: { result: true },
   });
 };
+
+// TODO: Add refresh auth token function

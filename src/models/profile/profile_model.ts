@@ -2,11 +2,14 @@ import mongoose, { Schema, InferSchemaType } from "mongoose";
 
 const profileSchema = new Schema(
   {
-    name: String,
+    firstName: String,
+    lastName: String,
     gender: String,
-    phoneNumber: Object,
+    countryCode: String,
+    phoneNumber: String,
     email: String,
     dob: Date,
+    profileImageUrl: String,
   },
   { _id: false, timestamps: true, versionKey: false, autoCreate: false }
 );

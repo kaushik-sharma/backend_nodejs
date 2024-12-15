@@ -1,10 +1,9 @@
-// import { Router } from "express";
+import { Router } from "express";
 
-// import { getUser, signOut } from "../controllers/profile_controller.js";
+import { getUser } from "../controllers/profile_controller.js";
 
-// const router = Router();
+const router = Router();
 
-// router.get("/user", getUser);
-// router.post("/signOut", signOut);
+router.get("/user", getUser);
 
-// export default router;
+export default router;

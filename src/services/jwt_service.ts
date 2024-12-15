@@ -4,6 +4,13 @@ import { SessionModel } from "../models/session/session_model.js";
 import { ClientSession } from "mongoose";
 
 export class JwtService {
+  static readonly #privateKey = fs.readFileSync("private-key.pem", "utf8");
+
+  static readonly #options: jwt.SignOptions = {
+    algorithm: "RS512",
+    expiresIn: "30d",
+  };
+
   static readonly generateJwt = async (
     userId: string,
     session?: ClientSession
@@ -11,21 +18,15 @@ export class JwtService {
     const sessionModel = new SessionModel({
       userId: userId,
     });
-    const sessionId = (await sessionModel.save({ session: session })).id as string;
+    const result = await sessionModel.save({ session: session });
+    const sessionId = result.id as string;
 
     const payload = {
       sessionId: sessionId,
       userId: userId,
     };
 
-    const privateKey = fs.readFileSync("private-key.pem", "utf8");
-
-    const options: jwt.SignOptions = {
-      algorithm: "RS512",
-      expiresIn: "30d",
-    };
-
-    return jwt.sign(payload, privateKey, options);
+    return jwt.sign(payload, this.#privateKey, this.#options);
   };
 
   static readonly verifyJwt = async (
@@ -52,6 +53,15 @@ export class JwtService {
     }
 
     return [userId, sessionId];
+  };
+
+  static readonly refreshAuthToken = (userId: string, sessionId: string): string => {
+    const payload = {
+      sessionId: sessionId,
+      userId: userId,
+    };
+
+    return jwt.sign(payload, this.#privateKey, this.#options);
   };
 }
 

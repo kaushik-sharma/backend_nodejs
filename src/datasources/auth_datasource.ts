@@ -121,4 +121,14 @@ export class AuthDatasource {
       }
     );
   };
+
+  static readonly isUserActive = async (id: string): Promise<boolean> => {
+    const result = await UserModel.findById(id, {status: true});
+    
+    if (result === null) return false;
+
+    if (result.status !== EntityStatus.active) return false;
+
+    return true;
+  };
 }

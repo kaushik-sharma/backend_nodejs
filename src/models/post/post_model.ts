@@ -6,7 +6,7 @@ const postCreationSchema = new Schema(
   {
     userId: {
       type: Types.ObjectId,
-      index: 1,
+      index: true,
       required: true,
     },
     text: {
@@ -40,7 +40,7 @@ export const PostCreationModel = mongoose.model<PostCreationType>(
   CollectionNames.posts
 );
 
-const postResponseSchema = new Schema(
+const postFeedSchema = new Schema(
   {
     text: String,
     likes: Number,
@@ -54,9 +54,9 @@ const postResponseSchema = new Schema(
   }
 );
 
-export type PostResponseType = InferSchemaType<typeof postResponseSchema>;
+export type PostFeedType = InferSchemaType<typeof postFeedSchema>;
 
-export const PostResponseModel = mongoose.model<PostResponseType>(
-  "PostResponseModel",
-  postResponseSchema
+export const PostFeedModel = mongoose.model<PostFeedType>(
+  "PostFeedModel",
+  postFeedSchema
 );
