@@ -53,7 +53,7 @@ const userSchema = new Schema(
     },
     countryCode: {
       type: String,
-      index: true,
+      index: 1,
       required: true,
       trim: true,
       validate: {
@@ -63,7 +63,7 @@ const userSchema = new Schema(
     },
     phoneNumber: {
       type: String,
-      index: true,
+      index: 1,
       required: true,
       trim: true,
       validate: {
@@ -73,7 +73,7 @@ const userSchema = new Schema(
     },
     email: {
       type: String,
-      index: true,
+      index: 1,
       required: true,
       minLength: 1,
       maxLength: 255,

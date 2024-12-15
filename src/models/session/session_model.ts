@@ -7,7 +7,7 @@ const sessionSchema = new Schema(
     userId: {
       type: Types.ObjectId,
       required: true,
-      index: true,
+      index: 1,
     },
   },
   { timestamps: true, versionKey: false }

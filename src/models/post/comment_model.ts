@@ -5,8 +5,8 @@ import { EntityStatus } from "../auth/user_model.js";
 
 const commentSchema = new Schema(
   {
-    postId: { type: Types.ObjectId, index: true, required: true },
-    userId: { type: Types.ObjectId, index: true, required: true },
+    postId: { type: Types.ObjectId, index: 1, required: true },
+    userId: { type: Types.ObjectId, index: 1, required: true },
     parentCommentId: { type: Types.ObjectId },
     level: {
       type: Number,

@@ -5,8 +5,8 @@ const contentReporterSchema = new Schema(
   {
     userId: {
       type: Types.ObjectId,
+      index: 1,
       required: true,
-      index: true,
     },
   },
   { timestamps: true, versionKey: false }

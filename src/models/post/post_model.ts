@@ -6,7 +6,7 @@ const postCreationSchema = new Schema(
   {
     userId: {
       type: Types.ObjectId,
-      index: true,
+      index: 1,
       required: true,
     },
     text: {
