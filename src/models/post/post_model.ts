@@ -16,6 +16,10 @@ const postSchema = new Schema(
       minLength: 1,
       maxLength: 255,
     },
+    parentPostId: {
+      type: Types.ObjectId,
+      default: null,
+    },
     status: {
       type: String,
       enum: Object.values(EntityStatus),

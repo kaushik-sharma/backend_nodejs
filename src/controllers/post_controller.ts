@@ -21,6 +21,15 @@ export const createPost: RequestHandler = async (req, res, next) => {
 
   validateModel(post);
 
+  if (post.parentPostId !== null) {
+    const postExists: boolean = await PostDatasource.postExists(
+      post.parentPostId!.toString()
+    );
+    if (!postExists) {
+      throw new Error("Post not found!");
+    }
+  }
+
   await PostDatasource.createPost(post);
 
   successResponseHandler({
