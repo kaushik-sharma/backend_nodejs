@@ -46,6 +46,10 @@ const postFeedSchema = new Schema(
     likes: Number,
     dislikes: Number,
     comments: Number,
+    createdAt: Date,
+    firstName: String,
+    lastName: String,
+    profileImageUrl: String,
   },
   {
     timestamps: false,

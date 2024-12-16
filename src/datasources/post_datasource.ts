@@ -4,6 +4,7 @@ import { CommentModel, CommentType } from "../models/post/comment_model.js";
 import {
   PostCreationModel,
   PostCreationType,
+  PostFeedModel,
   PostFeedType,
 } from "../models/post/post_model.js";
 import {
@@ -369,6 +370,13 @@ export class PostDatasource {
   static readonly getPostsFeed = async (
     page: number
   ): Promise<PostFeedType[]> => {
-    return await PostDatasource.#postsAggregatePipeline(null, page);
+    const docs = await PostDatasource.#postsAggregatePipeline(null, page);
+
+    const posts: PostFeedType[] = [];
+    for (const doc of docs) {
+      posts.push(new PostFeedModel(doc));
+    }
+
+    return posts;
   };
 }
