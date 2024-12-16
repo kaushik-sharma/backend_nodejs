@@ -2,8 +2,8 @@ import { ObjectId } from "mongodb";
 
 import { CommentModel, CommentType } from "../models/post/comment_model.js";
 import {
-  PostCreationModel,
-  PostCreationType,
+  PostModel,
+  PostType,
   PostFeedModel,
   PostFeedType,
 } from "../models/post/post_model.js";
@@ -17,15 +17,13 @@ import { EntityStatus } from "../models/auth/user_model.js";
 import { COMMENTS_PAGE_SIZE, POSTS_PAGE_SIZE } from "../constants/values.js";
 
 export class PostDatasource {
-  static readonly createPost = async (
-    postData: PostCreationType
-  ): Promise<void> => {
-    const post = new PostCreationModel(postData);
+  static readonly createPost = async (postData: PostType): Promise<void> => {
+    const post = new PostModel(postData);
     await post.save();
   };
 
   static readonly postExists = async (id: string): Promise<boolean> => {
-    const result = await PostCreationModel.findOne(
+    const result = await PostModel.findOne(
       { _id: id, status: EntityStatus.active },
       { userId: true }
     );
@@ -150,7 +148,7 @@ export class PostDatasource {
   };
 
   static readonly getPostUserId = async (postId: string): Promise<string> => {
-    const result = await PostCreationModel.findOne(
+    const result = await PostModel.findOne(
       {
         _id: postId,
         status: EntityStatus.active,
@@ -166,7 +164,7 @@ export class PostDatasource {
     postId: string,
     userId: string
   ): Promise<void> => {
-    await PostCreationModel.updateOne(
+    await PostModel.updateOne(
       {
         _id: postId,
         userId: userId,
@@ -210,7 +208,7 @@ export class PostDatasource {
       matchStage.userId = new ObjectId(userId!);
     }
 
-    return await PostCreationModel.aggregate<PostFeedType>([
+    return await PostModel.aggregate<PostFeedType>([
       { $match: matchStage },
       // Join reactions to calculate like and dislike counts
       {

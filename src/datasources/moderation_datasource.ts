@@ -16,7 +16,7 @@ import {
   ReportUserType,
 } from "../models/moderation/report_user_model.js";
 import { CommentModel } from "../models/post/comment_model.js";
-import { PostCreationModel } from "../models/post/post_model.js";
+import { PostModel } from "../models/post/post_model.js";
 
 export class ModerationDatasource {
   static readonly reportPost = async (data: ReportPostType): Promise<void> => {
@@ -31,7 +31,7 @@ export class ModerationDatasource {
   static readonly markPostForManualReview = async (
     postId: string
   ): Promise<void> => {
-    await PostCreationModel.updateOne(
+    await PostModel.updateOne(
       { _id: postId },
       {
         $set: {

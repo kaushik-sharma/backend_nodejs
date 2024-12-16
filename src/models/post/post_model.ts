@@ -2,7 +2,7 @@ import mongoose, { InferSchemaType, Schema, Types } from "mongoose";
 import { CollectionNames } from "../../constants/collection_names.js";
 import { EntityStatus } from "../auth/user_model.js";
 
-const postCreationSchema = new Schema(
+const postSchema = new Schema(
   {
     userId: {
       type: Types.ObjectId,
@@ -27,16 +27,16 @@ const postCreationSchema = new Schema(
   }
 );
 
-postCreationSchema.pre<PostCreationType>("save", function (next) {
+postSchema.pre<PostType>("save", function (next) {
   this.status = EntityStatus.active;
   next();
 });
 
-export type PostCreationType = InferSchemaType<typeof postCreationSchema>;
+export type PostType = InferSchemaType<typeof postSchema>;
 
-export const PostCreationModel = mongoose.model<PostCreationType>(
-  "PostCreationModel",
-  postCreationSchema,
+export const PostModel = mongoose.model<PostType>(
+  "PostModel",
+  postSchema,
   CollectionNames.posts
 );
 

@@ -4,10 +4,7 @@ import { arrayToTree } from "performant-array-to-tree";
 import { JwtService } from "../services/jwt_service.js";
 import { validateModel } from "../helpers/validation_helpers.js";
 import { successResponseHandler } from "../helpers/custom_handlers.js";
-import {
-  PostCreationModel,
-  PostCreationType,
-} from "../models/post/post_model.js";
+import { PostModel, PostType } from "../models/post/post_model.js";
 import { PostDatasource } from "../datasources/post_datasource.js";
 import { ReactionModel, ReactionType } from "../models/post/reaction_model.js";
 import { CommentModel, CommentType } from "../models/post/comment_model.js";
@@ -20,7 +17,7 @@ export const createPost: RequestHandler = async (req, res, next) => {
     userId: userId,
   };
 
-  const post = new PostCreationModel(reqBody as PostCreationType);
+  const post = new PostModel(reqBody as PostType);
 
   validateModel(post);
 
